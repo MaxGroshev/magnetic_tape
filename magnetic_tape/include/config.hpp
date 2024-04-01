@@ -7,27 +7,18 @@
 
 //-----------------------------------------------------------------------------------------
 
-class set_up_t {
-    private:
-        std::string src_dir;
-        std::string dest_dir;
-        std::string dict_dir;
-        int maxdict = 1000000;
-        bool train_mode = false; //better in set_up as it is responsible way of running
-        bool dictionary_mode = false;
-        bool decode_mode = false;
-
+struct set_up_t {
+    public:
+        std::string input_tape;
+        std::string output_tape;
+        size_t maxdict = 1000000;
 
         boost::program_options::options_description set_option_description() {
             using namespace boost::program_options;
             options_description desc{"Options"};
             desc.add_options()
             ("help,h", "help screen")
-            ("train",   value<bool>(), "train that is based"
-            "on samples from mentioned dir")
             ("keep,k",  value<std::string>(), "source_dir")
-            ("force,f" , "will be added soon")
-            ("dict,D", value<std::string>(), "dictionray_dir")
             ("maxdict", value<int>()->default_value(1000000), "dictionray_dir")
             ("OUTPUT,o",value<std::string>(), "dest_dir");
 
@@ -62,18 +53,8 @@ class set_up_t {
             }
             if (args.count("maxdict"))
                 maxdict = args["maxdict"].as<int>();
-            if (args.count("OUTPUT"))
+            if (args.count("OUTPUT")) {
                 dest_dir = std::move(args["OUTPUT"].as<std::string>());
-            else {
-                if (train_mode) {
-                    dest_dir = src_dir + ".dict";
-                }
-                else if (std::string str = std::string{argv[0]}; str.find("/unlzw") != str.npos) {
-                    dest_dir = src_dir + ".decode";
-                }
-                else {
-                    dest_dir = src_dir + ".lzw";
-                }
             }
         }
 

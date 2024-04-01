@@ -7,12 +7,9 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-// #include "lzw.hpp"
-
 #include "debug_utils.hpp"
-// #include "compress_tests.hpp"
-// #include "decompress_tests.hpp"
+#include "tape.hpp"
 
-
+#include "tape_unit_tests.hpp"
 
 //-----------------------------------------------------------------------------------------

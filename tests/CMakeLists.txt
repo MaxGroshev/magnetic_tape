@@ -26,7 +26,7 @@ set (E2E_TESTS
 
 add_executable            (unit_tests ${UNIT_TESTS} ${DEBUG_UTILS})
 target_include_directories(unit_tests PRIVATE${GTEST_INCLUDE_DIRS}
-                                      ../lzw_compressor/include/)
+                                      ../magnetic_tape/include/)
 target_link_libraries     (unit_tests ${GTEST_BOTH_LIBRARIES} debug_utils)
 
 enable_testing()
