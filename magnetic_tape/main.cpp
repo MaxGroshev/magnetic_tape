@@ -1,4 +1,4 @@
-#include "tape.hpp"
+#include "tape_sort.hpp"
 
 //-----------------------------------------------------------------------------------------
 
@@ -7,10 +7,13 @@ int main(int argc, char** argv) {
     auto start_time = time_control::chrono_cur_time ();
     try {
         // set_up_t set_up {argc, argv};
-        tape_handler_t<int> my_tape(10, "../tests/end_to_end_tests/my_test_dat/0.dat");
-        std::vector<int> data{1, 2, 3, 4};
+        tape_handler_t<int> my_tape(2, "../tests/end_to_end_tests/my_test_dat/0.dat");
+        std::vector<int> data{4, 3, 1, 2};
 
         my_tape.write_data_on_tape(data);
+        tape_sort_t<int> sorting {};
+        sorting.sort_tape(my_tape);
+
         // utils::dump_vect(data);
     } catch(std::runtime_error& err) {
         std::cout << "ERROR: " << err.what() << '\n';

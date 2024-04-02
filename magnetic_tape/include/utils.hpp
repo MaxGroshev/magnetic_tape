@@ -7,7 +7,6 @@
 #include <iterator>
 #include "time_control.hpp"
 
-
 namespace fs = std::filesystem;
 
 //-----------------------------------------------------------------------------------------
