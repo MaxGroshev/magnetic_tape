@@ -7,12 +7,13 @@ int main(int argc, char** argv) {
     auto start_time = time_control::chrono_cur_time ();
     try {
         // set_up_t set_up {argc, argv};
-        tape_handler_t<int> my_tape(2, "../tests/end_to_end_tests/my_test_dat/0.dat");
-        std::vector<int> data{4, 3, 1, 2};
+        tape_handler_t<int> my_tape(5 * sizeof(int), "../tests/end_to_end_tests/my_test_dat/0.dat");
+        tape_handler_t<int> res_tape(1 * sizeof(int), "../res");
+        std::vector<int> data{4, 7, 3, 4, 19};
 
-        my_tape.write_data_on_tape(data);
+        my_tape.write_data_on_tape(data.begin(), data.end());
         tape_sort_t<int> sorting {};
-        sorting.sort_tape(my_tape);
+        sorting.sort_tape(my_tape, res_tape);
 
         // utils::dump_vect(data);
     } catch(std::runtime_error& err) {
