@@ -6,12 +6,6 @@ from   subprocess import Popen, PIPE, STDOUT
 
 # -----------------------------------------------------------------------------------------
 
-class progs_name_t:
-    compressor   = "./lzw"
-    decompressor = "./unlzw"
-
-# -----------------------------------------------------------------------------------------
-
 class TERMINAL_COLORS:
         PURPLE    = '\033[95m'
         OKBLUE    = '\033[94m'
@@ -95,8 +89,8 @@ def show_total_test_stat(n_of_test, passed_test, failed):
 
 # -----------------------------------------------------------------------------------------
 
-def find_sha1(input_dat, decompressed):
-    pipe = Popen(["sha1sum", input_dat, decompressed], stdout = PIPE)
+def find_sha1(sorted_dat, correct):
+    pipe = Popen(["sha1sum", sorted_dat, correct], stdout = PIPE)
     stdout_data = pipe.communicate()
     string_data = stdout_data[0].decode()
     lst = string_data.split()
@@ -105,20 +99,17 @@ def find_sha1(input_dat, decompressed):
     return input_sha, decomp_sha
 
 
-def run_test(args, input_dat):
-    compr_file = input_dat.replace(args.input_dir, args.compressed_dir)
-    pipe = Popen([progs_name_t.compressor, "-k", input_dat,
-              "-o" + compr_file + ".lzw"], stdout = PIPE)
+def run_test(prog_name, args, input_dat):
+    my_sorted_file = input_dat.replace(args.input_file, args.sorted_file)
+    pipe = Popen([prog_name, "-k", input_dat, "-o" + my_sorted_file], stdout = PIPE)
     stdout_data = pipe.communicate()
-    decompr_file = input_dat.replace(args.input_dir, args.decompressed_dir)
-    # print ()
-    pipe = Popen([progs_name_t.decompressor, "-k", compr_file + ".lzw",
-            "-o" +  decompr_file + ".decode"], stdout = PIPE)
-    stdout_data = pipe.communicate()
-    return find_sha1(input_dat, decompr_file + ".decode")
+
+    correct_res_file = input_dat.replace(args.input_file, args.answer_file)
+
+    return find_sha1(my_sorted_file, correct_res_file)
 
 
-def run_test_data(args):
+def run_test_data(prog_name, args):
     passed_test = 0
     n_test      = 0
     failed = []
@@ -126,7 +117,7 @@ def run_test_data(args):
     for (n_test, input_file) in zip(range(min(len(data_files_names), args.num_to_test)), data_files_names):
         print('————————————————————————START_OF_TEST———————————————————————')
 
-        prog_res, correct_res = run_test(args, input_file)
+        prog_res, correct_res = run_test(prog_name, args, input_file)
         if (check_output_data(n_test, prog_res, correct_res, input_file)):
             passed_test += 1
         else:
@@ -137,13 +128,13 @@ def run_test_data(args):
 # -----------------------------------------------------------------------------------------
 
 def add_parse_arguments(parser):
-    parser.add_argument("-n",  "--num_to_test", type = int, default = 1000)
-    parser.add_argument('-in',  "--input_dir",  type = str, default =
-                    os.path.dirname(os.path.abspath(__file__)) + '/my_input_dat/lit_dat/')
-    parser.add_argument('-com', '--compressed_dir',          type = str, default =
-                    os.path.dirname(os.path.abspath(__file__)) + '/my_compress_dat/')
-    parser.add_argument('-decom', '--decompressed_dir',          type = str, default =
-                    os.path.dirname(os.path.abspath(__file__)) + '/my_decompress_dat/')
+    parser.add_argument("-n",  "--num_to_test", type = int, default = 1)
+    parser.add_argument('-if',  "--input_file",  type = str, default =
+                    os.path.dirname(os.path.abspath(__file__)) + '/my_test_dat/')
+    parser.add_argument('-sf',  '--sorted_file',          type = str, default =
+                    os.path.dirname(os.path.abspath(__file__)) + '/my_test_sort/')
+    parser.add_argument('-af', '--answer_file',          type = str, default =
+                    os.path.dirname(os.path.abspath(__file__)) + '/my_test_ans/')
 
 # -----------------------------------------------------------------------------------------
 
@@ -153,6 +144,6 @@ if __name__ == "__main__":
     add_parse_arguments(parser)
     args = parser.parse_args()
 
-    get_files_names(data_files_names, args.input_dir)
+    get_files_names(data_files_names, args.input_file)
 
-    run_test_data(args)
+    run_test_data("./tatlin", args)

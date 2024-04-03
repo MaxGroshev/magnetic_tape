@@ -11,9 +11,7 @@
 template<typename T>
 class tape_sort_t {
     private:
-
         std::string tmp_tapes_dir_ = "../tmp_tapes/";
-        std::string output_tape_;
         int n_of_tapes_ = 0;
         std::queue<tape_handler_t<T>> tmp_tapes_;
 
@@ -23,8 +21,9 @@ class tape_sort_t {
             while (!tape.reached_end_of_tape()) {
                 auto data = tape.read_data_from_tape();
                 std::sort(data.begin(), data.end());
-                tape_handler_t<T> tmp_tape {tape.get_ram_size(), data.size() * sizeof(T),
-                            (tmp_tapes_dir_ + std::to_string(n_of_tapes_ + 1)).c_str()};
+                auto config = tape.get_config();
+                tape_handler_t<T> tmp_tape {config, data.size() * sizeof(T),
+                            (tmp_tapes_dir_ + std::to_string(n_of_tapes_ + 1))};
                 tmp_tape.write_data_on_tape(data.begin(), data.end());
                 tmp_tape.rewind_tape();
                 tmp_tapes_.push(std::move(tmp_tape));
@@ -59,14 +58,15 @@ class tape_sort_t {
             std::string tape_name = tmp_tapes_dir_ + std::to_string(n_of_tapes_ + 1);
             n_of_tapes_++;
 
-            return tape_handler_t<T> {fst_tape.get_ram_size(), total_size,
+            auto config = fst_tape.get_config();
+            return tape_handler_t<T> {config, total_size,
                                       (tape_name).c_str()};
         }
 
 //-----------------------------------------------------------------------------------------
 
     public:
-        tape_sort_t(const char* tmp_tapes_dir = "../tmp_tapes/") :
+        tape_sort_t(fs::path tmp_tapes_dir = "../tmp_tapes/") :
             tmp_tapes_dir_(tmp_tapes_dir) {};
 
         void sort_tape(tape_handler_t<T>& tape, tape_handler_t<T>& res_tape) {
@@ -108,7 +108,6 @@ class tape_sort_t {
             res_tape.write_data_on_tape(data.begin(), data.end());
             res_tape.rewind_tape();
         }
-
 };
 
 //-----------------------------------------------------------------------------------------

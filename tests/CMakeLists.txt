@@ -25,9 +25,9 @@ set (E2E_TESTS
 
 
 add_executable            (unit_tests ${UNIT_TESTS} ${DEBUG_UTILS})
-target_include_directories(unit_tests PRIVATE${GTEST_INCLUDE_DIRS}
+target_include_directories(unit_tests PRIVATE ${GTEST_INCLUDE_DIRS}
                                       ../magnetic_tape/include/)
-target_link_libraries     (unit_tests ${GTEST_BOTH_LIBRARIES} debug_utils)
+target_link_libraries     (unit_tests ${GTEST_BOTH_LIBRARIES} debug_utils config_parse)
 
 enable_testing()
 add_test(NAME unit_testst COMMAND ./unit_tests)
