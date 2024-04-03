@@ -4,7 +4,6 @@
 #include <iostream>
 #include <filesystem>
 #include <sys/stat.h>
-#include <iterator>
 #include "time_control.hpp"
 
 namespace fs = std::filesystem;
@@ -31,7 +30,7 @@ std::vector<std::string> get_file_name_from_dir(const char* dir_name) {
         std::string outfilename_str = outfilename.string();
         const char* path = outfilename_str.c_str();
 
-        if (stat(path, &sb) == 0 && !(sb.st_mode & S_IFDIR)) {
+        if (stat(path, &sb) == 0 && !(sb.st_mode & S_IFDIR)) { //c-style(remove later)
             files.push_back(std::string(path));
         }
     }

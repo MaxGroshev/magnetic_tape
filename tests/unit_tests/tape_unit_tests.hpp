@@ -5,7 +5,7 @@
 class tape_test : public ::testing::Test {
     protected:
         const char* test_file = "../tests/unit_tests/unit_test_dat/0.dat";
-        tape_handler_t<int> my_tape{10, test_file};
+        tape_handler_t<int> my_tape{test_file};
 
     void SetUp() {
     }

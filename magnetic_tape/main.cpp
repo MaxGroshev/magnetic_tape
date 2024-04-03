@@ -10,9 +10,10 @@ int main(int argc, char** argv) {
         set_up_t prog_config {argc, argv};
         tape_config_t tape_config {prog_config.get_config_file()};
 
-        tape_config.dump();
+        // tape_config.dump();
         tape_handler_t<int> in_tape(tape_config, prog_config.get_input_tape_file());
-        tape_handler_t<int> out_tape(tape_config, prog_config.get_output_tape_file());
+        tape_handler_t<int> out_tape(tape_config, in_tape.get_size(),
+                                     prog_config.get_output_tape_file());
 
         tape_sort_t<int> sorting {};
         sorting.sort_tape(in_tape, out_tape);

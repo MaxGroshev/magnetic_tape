@@ -33,10 +33,14 @@ class tape_sort_t {
 
         void merge_tapes(tape_handler_t<T>& fst_tape, tape_handler_t<T>& snd_tape,
                          tape_handler_t<T>& merge_tape) {
-            if (snd_tape.get_size() == 0)
+            if (snd_tape.get_size() == 0) {
+                std::cout << "Returned\n";
                 return;
+            }
 
-            while (!fst_tape.reached_end_of_tape() && !snd_tape.reached_end_of_tape()) {
+            while (!fst_tape.reached_end_of_tape() &&
+                   !snd_tape.reached_end_of_tape()) {
+
                 T fst_elem = fst_tape.read_from_cell();
                 T snd_elem = snd_tape.read_from_cell();
                 merge_tape.write_and_move_forward(std::min(fst_elem, snd_elem));
@@ -46,14 +50,16 @@ class tape_sort_t {
                 else
                     snd_tape.move_tape_forward();
             }
-            if (fst_tape.reached_end_of_tape())
+            if (fst_tape.reached_end_of_tape()) {
                 merge_tape.copy_from_tape(snd_tape);
+            }
             else if (snd_tape.reached_end_of_tape())
                 merge_tape.copy_from_tape(fst_tape);
         }
 
         tape_handler_t<T> get_tape_for_merge(tape_handler_t<T>& fst_tape,
                                              tape_handler_t<T>& snd_tape) {
+
             size_t total_size = fst_tape.get_size() + snd_tape.get_size();
             std::string tape_name = tmp_tapes_dir_ + std::to_string(n_of_tapes_ + 1);
             n_of_tapes_++;
@@ -83,7 +89,7 @@ class tape_sort_t {
                     auto fst_tape = std::move(tmp_tapes_.front());
                     tmp_tapes_.pop();
                     tape_handler_t<T> snd_tape {};
-                    if (i <= tmp_tapes_.size() - 1) {
+                    if (i <= tmp_tapes_.size()) {
                         snd_tape = std::move(tmp_tapes_.front());
                         tmp_tapes_.pop();
                     }
@@ -102,7 +108,8 @@ class tape_sort_t {
                 }
             }
         }
-        void sort_without_tmp_tape(tape_handler_t<T>& tape, tape_handler_t<T>& res_tape) {
+        void sort_without_tmp_tape(tape_handler_t<T>& tape,
+                                   tape_handler_t<T>& res_tape) {
             auto data = tape.read_data_from_tape();
             std::sort(data.begin(), data.end());
             res_tape.write_data_on_tape(data.begin(), data.end());

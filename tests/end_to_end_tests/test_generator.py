@@ -20,6 +20,11 @@ def print_test_data(args, test_data):
         for num in test_data:
             file.write(num.to_bytes(4, byteorder='little', signed=True))
 
+    zero = 0
+    with open(args.res_os_sort_file, "wb") as file:
+        for num in test_data:
+            file.write(zero.to_bytes(4, byteorder='little', signed=True))
+
 
 def generate_test_data(args):
     test_data = []
@@ -39,6 +44,8 @@ def add_parse_arguments(parser):
                     os.path.dirname(os.path.abspath(__file__)) + '/my_test_dat/gen_test.dat')
     parser.add_argument('-af',  '--answer_file',          type = str, default =
                     os.path.dirname(os.path.abspath(__file__)) + '/my_test_ans/gen_test.dat')
+    parser.add_argument('-rf',  '--res_os_sort_file',          type = str, default =
+                    os.path.dirname(os.path.abspath(__file__)) + '/my_test_res/gen_test.dat')
 
 # -----------------------------------------------------------------------------------------
 
