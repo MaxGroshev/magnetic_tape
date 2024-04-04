@@ -6,11 +6,12 @@
 #include <sys/stat.h>
 #include "time_control.hpp"
 
-namespace fs = std::filesystem;
 
 //-----------------------------------------------------------------------------------------
 
 namespace utils {
+
+namespace fs = std::filesystem;
 
 template<typename T>
 void dump_vect(const std::vector<T>& vect) {

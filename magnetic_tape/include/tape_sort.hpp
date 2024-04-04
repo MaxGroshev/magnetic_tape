@@ -13,28 +13,27 @@ class tape_sort_t {
     private:
         std::string tmp_tapes_dir_ = "../tmp_tapes/";
         int n_of_tapes_ = 0;
-        std::queue<tape_handler_t<T>> tmp_tapes_;
+        std::queue<std::unique_ptr<itape_t<T>>> tmp_tapes_;
 
 //-----------------------------------------------------------------------------------------
 
-        void sort_by_parts(tape_handler_t<T>& tape) {
+        void sort_by_parts(itape_t<T>& tape) {
             while (!tape.reached_end_of_tape()) {
                 auto data = tape.read_data_from_tape();
                 std::sort(data.begin(), data.end());
                 auto config = tape.get_config();
-                tape_handler_t<T> tmp_tape {config, data.size() * sizeof(T),
-                            (tmp_tapes_dir_ + std::to_string(n_of_tapes_ + 1))};
-                tmp_tape.write_data_on_tape(data.begin(), data.end());
-                tmp_tape.rewind_tape();
+                auto tmp_tape = tape.create(config, data.size() * sizeof(T),
+                            (tmp_tapes_dir_ + std::to_string(n_of_tapes_ + 1)));
+                tmp_tape->write_data_on_tape(data.data(), data.size());
+                tmp_tape->rewind_tape();
                 tmp_tapes_.push(std::move(tmp_tape));
-                n_of_tapes_++; //consistent condition
+                n_of_tapes_++; //consistient condition
             }
         }
 
-        void merge_tapes(tape_handler_t<T>& fst_tape, tape_handler_t<T>& snd_tape,
-                         tape_handler_t<T>& merge_tape) {
+        void merge_tapes(itape_t<T>& fst_tape, itape_t<T>& snd_tape,
+                                               itape_t<T>& merge_tape) {
             if (snd_tape.get_size() == 0) {
-                std::cout << "Returned\n";
                 return;
             }
 
@@ -57,16 +56,15 @@ class tape_sort_t {
                 merge_tape.copy_from_tape(fst_tape);
         }
 
-        tape_handler_t<T> get_tape_for_merge(tape_handler_t<T>& fst_tape,
-                                             tape_handler_t<T>& snd_tape) {
+        std::unique_ptr<itape_t<T>> get_tape_for_merge(itape_t<T>& fst_tape,
+                                                       itape_t<T>& snd_tape) {
 
             size_t total_size = fst_tape.get_size() + snd_tape.get_size();
             std::string tape_name = tmp_tapes_dir_ + std::to_string(n_of_tapes_ + 1);
             n_of_tapes_++;
 
             auto config = fst_tape.get_config();
-            return tape_handler_t<T> {config, total_size,
-                                      (tape_name).c_str()};
+            return fst_tape.create(config, total_size, (tape_name).c_str());
         }
 
 //-----------------------------------------------------------------------------------------
@@ -75,7 +73,7 @@ class tape_sort_t {
         tape_sort_t(fs::path tmp_tapes_dir = "../tmp_tapes/") :
             tmp_tapes_dir_(tmp_tapes_dir) {};
 
-        void sort_tape(tape_handler_t<T>& tape, tape_handler_t<T>& res_tape) {
+        void sort_tape(itape_t<T>& tape, itape_t<T>& res_tape) {
             tape.rewind_tape();
             res_tape.rewind_tape();
             if (tape.get_size() <= tape.get_ram_size()) {
@@ -84,35 +82,33 @@ class tape_sort_t {
             }
             sort_by_parts(tape);
 
-            while (tmp_tapes_.size() > 1) {
+            while (tmp_tapes_.size() > 2) {
                 for (int i = 0; i < tmp_tapes_.size(); i += 2) {
                     auto fst_tape = std::move(tmp_tapes_.front());
                     tmp_tapes_.pop();
-                    tape_handler_t<T> snd_tape {};
+                    std::unique_ptr<itape_t<T>> snd_tape {};
                     if (i <= tmp_tapes_.size()) {
                         snd_tape = std::move(tmp_tapes_.front());
                         tmp_tapes_.pop();
                     }
-                    auto tape_for_merge = get_tape_for_merge(fst_tape, snd_tape);
-                    merge_tapes(fst_tape, snd_tape, tape_for_merge);
-
-                    tape_for_merge.rewind_tape();
+                    auto tape_for_merge = get_tape_for_merge(*fst_tape, *snd_tape);
+                    merge_tapes(*fst_tape, *snd_tape, *tape_for_merge);
+                    tape_for_merge->rewind_tape();
                     tmp_tapes_.push(std::move(tape_for_merge));
                 }
-                if (tmp_tapes_.size() == 2) {//last iteration of front
-                    auto fst_tape = std::move(tmp_tapes_.front());
-                    tmp_tapes_.pop();
-                    auto snd_tape = std::move(tmp_tapes_.front());
-                    tmp_tapes_.pop();
-                    merge_tapes(fst_tape, snd_tape, res_tape);
-                }
             }
+            auto fst_tape = std::move(tmp_tapes_.front());
+            tmp_tapes_.pop();
+            auto snd_tape = std::move(tmp_tapes_.front());
+            tmp_tapes_.pop();
+            merge_tapes(*fst_tape, *snd_tape, res_tape);
+
         }
-        void sort_without_tmp_tape(tape_handler_t<T>& tape,
-                                   tape_handler_t<T>& res_tape) {
+        void sort_without_tmp_tape(itape_t<T>& tape,
+                                   itape_t<T>& res_tape) {
             auto data = tape.read_data_from_tape();
             std::sort(data.begin(), data.end());
-            res_tape.write_data_on_tape(data.begin(), data.end());
+            res_tape.write_data_on_tape(data.data(), data.size());
             res_tape.rewind_tape();
         }
 };

@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 
 //-----------------------------------------------------------------------------------------
 
-class tape_config_t {
+class tape_config_t final {
 
     using chrono_time_type = typename std::chrono::nanoseconds;
     private:
@@ -68,7 +68,7 @@ class tape_config_t {
 
 //-----------------------------------------------------------------------------------------
 
-        size_t     get_ram_size()            const {return max_ram_size;};
+        size_t           get_ram_size()            const {return max_ram_size;};
         chrono_time_type get_rewind_delay()        const {return rewind_delay;};
         chrono_time_type get_move_forward_delay()  const {return move_forward_delay;};
         chrono_time_type get_move_backward_delay() const {return move_backward_delay;};
@@ -77,7 +77,7 @@ class tape_config_t {
 
         void dump() const {
             std::clog << "Dump_of tape_config:\n" <<
-            "Max ram size :"        << max_ram_size         << std::endl <<
+            "Max ram size :"        << max_ram_size        << std::endl <<
             "Write delay :"         << write_delay         << std::endl <<
             "Read delay :"          << read_delay          << std::endl <<
             "Move forward delay :"  << move_forward_delay  << std::endl <<

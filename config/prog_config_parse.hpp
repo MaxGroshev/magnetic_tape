@@ -12,7 +12,7 @@ namespace fs = std::filesystem;
 
 //-----------------------------------------------------------------------------------------
 
-struct set_up_t {
+struct set_up_t final {
     public:
         fs::path input_tape_file;
         fs::path output_tape_file;

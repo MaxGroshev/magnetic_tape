@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
 
         // tape_config.dump();
         tape_handler_t<int> in_tape(tape_config, prog_config.get_input_tape_file());
-        tape_handler_t<int> out_tape(tape_config, in_tape.get_size(),
+        tape_handler_t<int> out_tape(tape_config,
                                      prog_config.get_output_tape_file());
 
         tape_sort_t<int> sorting {};

@@ -1,102 +1,83 @@
 #pragma once
 
-#include "utils.hpp"
-#include <string>
-#include <iostream>
-#include <thread>
-
-#include "tape_config_parse.hpp"
+#include <itape.hpp>
 
 //-----------------------------------------------------------------------------------------
 
 template<typename T>
-class tape_handler_t {
-    public:
-        tape_config_t config_;
-        std::fstream tape_;
-        size_t max_count_of_elem_in_ram_;
-        size_t tape_size_ = 0;
-        std::streampos cur_pos_ = 0;
+class tape_handler_t final : public itape_t<T> {
+    private:
+        using itape_t<T>::config_;
+        using itape_t<T>::tape_;
+        using itape_t<T>::max_count_of_elem_in_ram_;
+        using itape_t<T>::tape_size_;
+        using itape_t<T>::cur_pos_;
 
-        std::streampos set_cur_pos(std::streampos pos) {
+        std::streampos update_cur_pos(std::streampos pos) {
             cur_pos_ = pos;
             tape_.seekg(pos);
             return cur_pos_;
         }
     public:
 
-        tape_handler_t() : //think how to improve
-            tape_size_(0) {};
+        tape_handler_t() :
+            itape_t<T>(0) {};
 
         tape_handler_t(tape_config_t& config, fs::path tape_name) :
-            config_(config),
-            max_count_of_elem_in_ram_(config_.get_ram_size() / sizeof(T)),
-            tape_(tape_name, std::ios::in | std::ios::out | std::ios::binary) {
-                if (max_count_of_elem_in_ram_ < 1) {
-                    throw std::runtime_error(
-                    "Size of Ram is too little (at least sizeof(T))");
-                }
-                tape_size_ = fs::file_size(tape_name); //improve
-                // std::cout << tape_name << "   " << tape_size_ << std::endl;
-        };
+            itape_t<T>(config, tape_name)
+        {};
 
         tape_handler_t(tape_config_t& config, size_t size, fs::path tape_name) :
-            config_(config),
-            max_count_of_elem_in_ram_(config_.get_ram_size() / sizeof(T)),
-            tape_size_(size), tape_(tape_name, std::ios::in |
-            std::ios::out | std::ios::binary | std::ios::trunc) {
-                if (max_count_of_elem_in_ram_ < 1) {
-                    throw std::runtime_error(
-                    "Size of Ram is too little (at least sizeof(T))");
-                }
-                //std::cout << "SND: "<<tape_name << "   " << tape_size_ << std::endl;
-        };
+            itape_t<T>(config, size, tape_name)
+        {};
 
         tape_handler_t(const char* tape_name) :
-            max_count_of_elem_in_ram_(config_.get_ram_size() / sizeof(T)),
-            tape_(tape_name, std::ios::in | std::ios::out | std::ios::binary) {
-                if (max_count_of_elem_in_ram_ < 1) {
-                    throw std::runtime_error(
-                    "Size of Ram is too little (at least sizeof(T))");
-                }
-                tape_size_ = fs::file_size(tape_name); //improve
-                //std::cout << tape_name << "   " << tape_size_ << std::endl;
-        };
+            itape_t<T>(tape_name)
+        {};
 
-        std::vector<T> read_data_from_tape();
-        template<typename It>
-        void write_data_on_tape(It start, It fin);
+        std::unique_ptr<itape_t<T>> create(tape_config_t& config,
+                                                  fs::path tape_name) {
+            return std::unique_ptr<itape_t<T>>(
+                    new tape_handler_t<T>(config, tape_name));
+        }
+
+        std::unique_ptr<itape_t<T>> create(tape_config_t& config,
+                                        size_t size, fs::path tape_name) {
+            return std::unique_ptr<itape_t<T>>(
+                    new tape_handler_t<T>(config, size, tape_name));
+        }
+
+//-----------------------------------------------------------------------------------------
+
 
         void move_tape_forward() {
             std::this_thread::sleep_for(config_.get_move_forward_delay());
 
             if (reached_end_of_tape())
                 throw std::runtime_error("Attempt to access elem out of tape");
-            set_cur_pos(tape_.tellg() + std::streamoff(sizeof(T)));
+            update_cur_pos(tape_.tellg() + std::streamoff(sizeof(T)));
         }
         void move_tape_backward() {
             std::this_thread::sleep_for(config_.get_move_backward_delay());
 
             if (cur_pos_ - std::streamoff(sizeof(int)) < 0)
                 throw std::runtime_error("Attempt to access elem out of tape");
-
-            set_cur_pos(tape_.tellg() - std::streamoff(sizeof(T)));
+            update_cur_pos(tape_.tellg() - std::streamoff(sizeof(T)));
         }
         void rewind_tape() {
             std::this_thread::sleep_for(config_.get_rewind_delay());
 
-            set_cur_pos(0);
+            update_cur_pos(0);
         }
         T write_to_cell(T elem) {
             std::this_thread::sleep_for(config_.get_write_delay());
 
             auto prev_pos = cur_pos_;
             tape_.write(reinterpret_cast<char*>(&elem), sizeof(elem));
-            set_cur_pos(prev_pos);
+            update_cur_pos(prev_pos);
             return elem;
         }
         T write_and_move_forward(T elem) {
-
             write_to_cell(elem);
             if (!reached_end_of_tape())
                 move_tape_forward();
@@ -114,10 +95,13 @@ class tape_handler_t {
             auto prev_pos = cur_pos_;
             T elem {};
             tape_.read(reinterpret_cast<char*>(&elem), sizeof(elem));
-            set_cur_pos(prev_pos);
+            update_cur_pos(prev_pos);
             return elem;
         }
-        void copy_from_tape(tape_handler_t<T>& src);
+
+        std::vector<T> read_data_from_tape() override;
+        void write_data_on_tape(T* cont, size_t n_elem) override;
+        void copy_from_tape(itape_t<T>& src) override;
         std::streampos get_cur_pos() const {return cur_pos_;};
         size_t get_ram_size() const {return config_.get_ram_size();};
         size_t get_size() const {return tape_size_;};
@@ -141,16 +125,17 @@ std::vector<T> tape_handler_t<T>::read_data_from_tape() {
 }
 
 template<typename T>
-template<typename It>
-void tape_handler_t<T>::write_data_on_tape(It start, It fin) {
-    for(auto iter = start; (iter != fin) && !reached_end_of_tape(); iter++) {
-        write_to_cell(*iter);
+void tape_handler_t<T>::write_data_on_tape(T* cont, size_t n_elem) {
+    if (!cont)
+        return;
+    for(int i = 0; (i < n_elem) && !reached_end_of_tape(); i++) {
+        write_to_cell(cont[i]);
         move_tape_forward();
     }
 }
 
 template<typename T>
-void tape_handler_t<T>::copy_from_tape(tape_handler_t<T>& src) {
+void tape_handler_t<T>::copy_from_tape(itape_t<T>& src) {
     while (!reached_end_of_tape() && !src.reached_end_of_tape()) {
         write_to_cell(src.read_from_cell());
         move_tape_forward();
