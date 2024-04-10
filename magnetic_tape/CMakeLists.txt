@@ -19,6 +19,7 @@ add_executable(${PROJECT_NAME} main.cpp)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_link_libraries(${PROJECT_NAME} ${SRC_LIST})
 target_link_libraries(${PROJECT_NAME} debug_utils  config_parse)
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
+                                                  ${CMAKE_CURRENT_SOURCE_DIR}/include/tape
+                                                  ${CMAKE_CURRENT_SOURCE_DIR}/include/tape_sort)
 

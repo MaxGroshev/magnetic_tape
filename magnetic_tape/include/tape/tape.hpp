@@ -7,11 +7,11 @@
 template<typename T>
 class tape_handler_t final : public itape_t<T> {
     private:
-        using itape_t<T>::config_;
-        using itape_t<T>::tape_;
-        using itape_t<T>::max_count_of_elem_in_ram_;
-        using itape_t<T>::tape_size_;
-        using itape_t<T>::cur_pos_;
+        tape_config_t config_;
+        std::fstream tape_;
+        size_t max_count_of_elem_in_ram_;
+        size_t tape_size_ = 0;
+        std::streampos cur_pos_ = 0;
 
         std::streampos update_cur_pos(std::streampos pos) {
             cur_pos_ = pos;
@@ -21,19 +21,42 @@ class tape_handler_t final : public itape_t<T> {
     public:
 
         tape_handler_t() :
-            itape_t<T>(0) {};
+            tape_size_(0) {};
 
         tape_handler_t(tape_config_t& config, fs::path tape_name) :
-            itape_t<T>(config, tape_name)
-        {};
+            config_(config),
+            max_count_of_elem_in_ram_(config_.get_ram_size() / sizeof(T)),
+            tape_(tape_name, std::ios::in | std::ios::out | std::ios::binary) {
+                if (max_count_of_elem_in_ram_ < 1) {
+                    throw std::runtime_error(
+                    "Size of Ram is too little (at least sizeof(T))");
+                }
+                tape_size_ = fs::file_size(tape_name);
+                // std::cout << tape_name << "   " << tape_size_ << std::endl;
+        };
 
         tape_handler_t(tape_config_t& config, size_t size, fs::path tape_name) :
-            itape_t<T>(config, size, tape_name)
-        {};
+            config_(config),
+            max_count_of_elem_in_ram_(config_.get_ram_size() / sizeof(T)),
+            tape_size_(size), tape_(tape_name, std::ios::in |
+            std::ios::out | std::ios::binary | std::ios::trunc) {
+                if (max_count_of_elem_in_ram_ < 1) {
+                    throw std::runtime_error(
+                    "Size of Ram is too little (at least sizeof(T))");
+                }
+                // std::cout << "SND: "<<tape_name << "   " << tape_size_ << std::endl;
+        };
 
         tape_handler_t(const char* tape_name) :
-            itape_t<T>(tape_name)
-        {};
+            max_count_of_elem_in_ram_(config_.get_ram_size() / sizeof(T)),
+            tape_(tape_name, std::ios::in | std::ios::out | std::ios::binary) {
+                if (max_count_of_elem_in_ram_ < 1) {
+                    throw std::runtime_error(
+                    "Size of Ram is too little (at least sizeof(T))");
+                }
+                tape_size_ = fs::file_size(tape_name);
+                // std::cout << tape_name << "   " << tape_size_ << std::endl;
+        };
 
         std::unique_ptr<itape_t<T>> create(tape_config_t& config,
                                                   fs::path tape_name) {
